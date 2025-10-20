@@ -266,4 +266,280 @@ ORDER BY course_id DESC;
 
 <img src="file:///Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-17-17-05-58-image.png" title="" alt="" width="319">
 
+### DML详解 FROM语句-JOIN运算
 
+From 子句用于指定从哪个表中获取数据，以便后续操作能够找到所需的信息。
+
+```sql
+SELECT * FROM students,course WHERE students.course_id = course.course_id;
+```
+
+![](/Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-18-22-33-25-image.png)
+
+```sql
+SELECT * FROM students JOIN course ON students.course_id = course.course_id;
+```
+
+![](/Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-18-22-38-00-image.png)
+
+怎么使用JOIN语句连接多个表呢
+
+```sql
+SELECT * FROM (students JOIN classes ON classes.class_id=students.class_id) JOIN course ON students.course_id = course.course_id
+```
+
+![](/Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-19-14-02-07-image.png)
+
+**Inner join**
+
+使用等号进行inner join以获得两表的交集，即共有的行。
+
+```sql
+select * from a INNER JOIN b on a.a = b.b;
+select a.*,b.*  from a,b where a.a = b.b;
+
+a | b
+--+--
+3 | 3
+4 | 4
+```
+
+**Left outer join**
+
+ left outer join 除了获得B表中符合条件的列外，还将获得A表所有的列。
+
+```sql
+select * from a LEFT OUTER JOIN b on a.a = b.b;
+select a.*,b.*  from a,b where a.a = b.b(+);
+
+a |  b  
+--+-----
+1 | null
+2 | null
+3 |    3
+4 |    4
+```
+
+**Full outer join**
+
+full outer join 得到A和B的交集,即A和B中所有的行.。如果A中的行在B中没有对应的部分,B的部分将是 null, 反之亦然。
+
+```sql
+select * from a FULL OUTER JOIN b on a.a = b.b;
+
+ a   |  b  
+-----+-----
+   1 | null
+   2 | null
+   3 |    3
+   4 |    4
+null |    6
+null |    5
+```
+
+Inner join 和outer join的部分由[尤慕](http://my.csdn.net/youmoo)译自[Stack Overflow](http://stackoverflow.com/questions/38549/sql-difference-between-inner-and-outer-join)，转载请保留此信息。
+
+当使用join子句而没有outer前缀时，默认的连接类型是内连接（inner join）
+
+**natural join**
+
+- 自然连接仅考虑哪些在两个关系模式中都出现的属性上取值相同的元素对，每一个相同属性列仅留一个拷贝。
+
+- 自然连接（natural join）的风险：需警惕同名但无关的属性，它们可能会被错误地等同起来。
+
+**self join**
+
+自连接
+
+```sql
+-- 自连接示例：查找同班同学
+SELECT s1.name AS student1, s2.name AS student2, s1.class_id
+FROM students s1 
+JOIN students s2 ON s1.class_id = s2.class_id 
+WHERE s1.name < s2.name;
+
+-- 自连接示例：查找年龄相同的学生
+SELECT s1.name AS student1, s2.name AS student2, s1.age
+FROM students s1 
+JOIN students s2 ON s1.age = s2.age 
+WHERE s1.name != s2.name;
+```
+
+### DML详解 RESTRICT语句
+
+![](/Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-19-14-56-52-image.png)
+
+逻辑连词的计算优先级: not > and > or
+
+**% _的用法**
+
+```sql
+-- LIKE操作符示例演示
+
+-- 1. 使用 % 匹配任意子字符串
+-- 查找姓名以"张"开头的学生
+SELECT * FROM students WHERE name LIKE '张%';
+
+-- 查找姓名以"三"结尾的学生
+SELECT * FROM students WHERE name LIKE '%三';
+
+-- 查找姓名中包含"四"的学生
+SELECT * FROM students WHERE name LIKE '%四%';
+
+-- 2. 使用 _ 匹配任意单个字符
+-- 查找姓名为两个字符的学生（第二个字符任意）
+SELECT * FROM students WHERE name LIKE '__';
+
+-- 查找姓名为三个字符且第二个字符为"五"的学生
+SELECT * FROM students WHERE name LIKE '_五_';
+
+-- 3. 组合使用 % 和 _
+-- 查找姓名第一个字符任意，第二个字符为"三"，后面可以有任意字符的学生
+SELECT * FROM students WHERE name LIKE '_三%';
+
+-- 查找课程名称中包含"计算机"的课程
+SELECT * FROM course WHERE course_name LIKE '%计算机%';
+
+-- 查找班级名称以"计算机"开头且以"班"结尾的班级
+SELECT * FROM classes WHERE class_name LIKE '计算机%班';
+
+-- 查找班级名称格式为"计算机X班"的班级（X为任意单个字符）
+SELECT * FROM classes WHERE class_name LIKE '计算机_班';
+```
+
+**选定的字符可以用作转义字符。**
+
+例如，like 'ab\\_cd%' escape '\';
+escape'\' 会匹配所有以“ab_cd”开头的字符串
+
+**集合的用法**
+
+```sql
+SELECT * FROM students WHERE class_id IN (1, 3);
+```
+
+**ANY（mysql不支持）**
+
+```sql
+-- ANY操作符示例演示
+-- 查找GPA大于等于任意一个值(3.0, 3.5, 3.8)的学生
+SELECT * FROM students WHERE gpa >= ANY ( VALUES (3.0), (3.5), (3.8) );
+
+-- 查找年龄小于等于任意一个值(19, 20, 21)的学生
+SELECT * FROM students WHERE age <= ANY ( VALUES (19), (20), (21) );
+
+-- 查找班级ID等于任意一个值(1, 2)的学生
+SELECT * FROM students WHERE class_id = ANY ( VALUES (1), (2) );
+```
+
+**EXISTS**
+
+EXISTS子查询查询结果只有0或1
+
+```sql
+-- 查找有学生的班级
+SELECT *
+FROM classes cl
+WHERE
+    EXISTS (
+        SELECT *
+        FROM students s
+        WHERE
+            s.class_id = cl.class_id
+    );
+
+-- 查找没有学生的班级
+SELECT *
+FROM classes cl
+WHERE
+    NOT EXISTS (
+        SELECT *
+        FROM students s
+        WHERE
+            s.class_id = cl.class_id
+    );
+```
+
+### DML详解 聚集运算 GROUP BY 和  HAVING 子句
+
+```sql
+SELECT COUNT(*) FROM students;
+```
+
+这样你就可以查询到students表有多少行数据
+
+如果你想看某项非空的行数，可以加上DISTINCT
+
+```sql
+SELECT deptno,count(DISTINCT job) jobTypeCnt
+
+FROM EMP e
+
+GROUP BY DEPTNO
+
+ORDER BY DEPTNO
+```
+
+当然你也可以为结果命名
+
+```sql
+SELECT COUNT(*) NUM FROM students;
+```
+
+同样聚合查询也支持where
+
+```sql
+SELECT COUNT(*) NUM FROM students WHERE gpa >=3.5;
+```
+
+SUM计算某一列的合计值，该列必须为数值类型
+
+```sql
+SELECT SUM(gpa) FROM students;
+```
+
+AVG计算某一列的平均值，该列必须为数值类型
+
+```sql
+SELECT AVG(gpa) FROM students;
+```
+
+MAX计算某一列的最大值
+
+```sql
+SELECT MAX(gpa) FROM students;
+```
+
+MIN计算某一列的最小值
+
+```sql
+SELECT MIN(gpa) FROM students;
+```
+
+注意，`MAX()`和`MIN()`函数并不限于数值类型。如果是字符类型，`MAX()`和`MIN()`会返回排序最后和排序最前的字符。
+
+**分组**
+
+```sql
+SELECT students.class_id,count(*) FROM students GROUP BY students.class_id;
+```
+
+这样会将students表根据class_id分组，之后对每组进行计数
+
+<img src="file:///Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-20-10-09-13-image.png" title="" alt="" width="418">
+
+也可以使用多个列进行分组。
+
+```sql
+SELECT s.class_id,s.sex,COUNT(*) FROM students s GROUP BY s.class_id,s.sex;
+```
+
+`HAVING condition`：一个条件，用于筛选分组的结果。只有满足条件的分组会包含在结果集中。
+
+```sql
+SELECT s.class_id,s.sex,COUNT(*) FROM students s GROUP BY s.class_id,s.sex HAVING sex = '男';
+```
+
+<img src="file:///Users/easyimpr/Library/Application%20Support/marktext/images/2025-10-20-11-14-27-image.png" title="" alt="" width="421">
+
+### DML详解-select子句-project运算
